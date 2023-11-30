@@ -112,10 +112,10 @@ href="https://www.youtube.com/channel/UChfUOAhz7ynELF-s_1LPpWg">Lecture videos a
     least-squares objective to capture the errors; more generally we will look
     at fitting stochastic models to the data.</p>
 
-    <p>We often separate the identification procedure into two parts, were we
-    first estimate the state $\hat{\bx}_n$ given the input-output data $\bu_n,
-    \by_n$, and then focus on estimating the state-evolution dynamics in a
-    second step.  The dynamics estimation algorithms fall into two main
+    <p>We often separate the identification procedure into two parts, in which
+    we first estimate the state $\hat{\bx}_n$ given the input-output data
+    $\bu_n, \by_n$, and then focus on estimating the state-evolution dynamics
+    in a second step.  The dynamics estimation algorithms fall into two main
     categories: <ul><li><i>Equation error</i> minimizes only the one-step
     prediction error: $$\min_{\alpha} \sum_{n=0}^{N-2} \| f_\balpha(\hat\bx_n,
     \bu_n) - \hat{\bx}_{n+1} \|^2_2.$$  </li><li><i>Simulation error</i>
@@ -257,13 +257,12 @@ href="https://www.youtube.com/channel/UChfUOAhz7ynELF-s_1LPpWg">Lecture videos a
       offsets.  This one can be a real nuisance in practice.  Joint sensors can
       slip, and some robots even use relative rotary encoders, and rely on
       driving the joint to some known hard joint limit each time the robot is
-      powered on in order to obtain the offset.  I've worked on one humanoid
+      powered on in order to obtain the offset.  I've worked on one advanced
       robot that had a quite elaborate and painful kinematic calibration
       procedure which involve fitting additional hardware over the joints to
       ensure they were in a known location and then running a script.  Having a
       an expensive and/or unreliable calibration procedure can put a damper on
-      any robotics project.  For underactuated systems, in particular, it can
-      have a dramatic effect on performance.</p>
+      any robotics project.</p>
 
       <example><h1>Acrobot balancing with calibration error</h1>
 
@@ -438,14 +437,34 @@ href="https://www.youtube.com/channel/UChfUOAhz7ynELF-s_1LPpWg">Lecture videos a
       parameters are precisely the subset of the lumped parameters that we
       need.</p>
 
-      <p>For practical reasons, it might be convenient to take your estimates
-      of the lumped parameters, and try to back out the original parameters
-      (for instance, if you want to write them back out into a URDF file).  For
-      this, I would recommend a final post-processing step that e.g. finds the
-      parameters $\hat{\balpha}$ that are as close as possible (e.g. in the
-      least-squares sense) to your original guess for the parameters, subject
-      to the nonlinear constraint that $\bR_1 \balpha_l(\hat{\balpha})$ matches
-      the estimated identifiable lumped parameters.
+    </subsection>
+
+    <subsection><h1>Inertial parameter identification</h1>
+
+      <p>If we have successfully identified the kinematic parameters in a
+      pre-processing step, then the dependence of the inverse dynamics
+      equations on the <i>inertial</i> (only) parameters simplifies the problem
+      even further. The inverse dynamics are <i>affine</i> in the inertial parameters directly (there is not need for the lumped parameter decomposition) <elib>Atkeson86</elib>. <elib>Lee19</elib> gives the beautiful geometric picture for why the natural parameterization </p>
+
+      <p>For practical reasons, it might be important to identify the
+      parameters in their original form (for instance, if you want to write
+      them back out into a URDF file). <elib>Wensing17a</elib> gives a very
+      clean understanding of why the natural parameterization of the inertial
+      terms for each individual body, $B$, is: $$\alpha_B = \begin{bmatrix}m_B,
+      {\bf h}_B^T, I_{xx}^{B/Bo}, I_{yy}^{B/Bo}, I_{zz}^{B/Bo}, I_{xy}^{B/Bo},
+      I_{zx}^{B/Bo} \end{bmatrix} \in \Re^{10},$$ where $m_B$ is the total body
+      mass, ${\bf h}_B = m_B \,{}^B {\bf p}^{B_{CoM}}\in \Re^3$ is mass times
+      the center of mass in the body frame, and ${\bf I}^{B/Bo} \in \Re^{3
+      \times 3}$ is the inertia matrix about the origin of the body frame, $B$.
+      These can be understood as the density-weighted moment matrices:
+      \begin{gather*} m_B &=& \int_{\Re^3} \rho(\bx)dV \\ {\bf h}_B &=&
+      \int_{\Re^3} \bx \rho(\bx) dV \\ {\bf I}^{B/Bo} &=& \int_{\Re^3}
+      \begin{bmatrix} y^2 + z^2 & -xy & -xz \\ -xy & x^2 + z^2 & -yz \\ -xz &
+      -yz & x^2 + y^2 \end{bmatrix}\rho(\bx)dV. \end{gather*}  </p>
+  
+      is in terms of the
+      "pseudoinertial matrix": $$P = \begin{bmatrix} \Sigma scalar mass, $m$, a
+      $h \in \Re^3$ which represents the density-weighted moment matrices:
       </p>
 
       <p>There are still a few subtleties worth considering, such as how we
